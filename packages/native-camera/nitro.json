@@ -1,0 +1,22 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "cxxNamespace": ["ledgercamera"],
+  "ios": {
+    "iosModuleName": "LedgerCamera"
+  },
+  "android": {
+    "androidNamespace": ["ledgercamera"],
+    "androidCxxLibName": "LedgerCamera"
+  },
+  "autolinking": {
+    "LedgerCamera": {
+      "ios": { "language": "swift", "implementationClassName": "HybridLedgerCamera" },
+      "android": { "language": "kotlin", "implementationClassName": "HybridLedgerCamera" }
+    },
+    "PhotoView": {
+      "ios": { "language": "swift", "implementationClassName": "HybridPhotoView" },
+      "android": { "language": "kotlin", "implementationClassName": "HybridPhotoView" }
+    }
+  },
+  "ignorePaths": ["**/node_modules"]
+}

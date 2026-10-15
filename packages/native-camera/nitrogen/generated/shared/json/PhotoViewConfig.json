@@ -1,0 +1,10 @@
+{
+  "uiViewClassName": "PhotoView",
+  "supportsRawText": false,
+  "bubblingEventTypes": {},
+  "directEventTypes": {},
+  "validAttributes": {
+    "photo": true,
+    "hybridRef": true
+  }
+}
