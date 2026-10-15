@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Ledger",
+    "slug": "ledger",
+    "scheme": "ledger",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.ledger",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    },
+    "android": {
+      "package": "com.example.ledger",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ledger uses your photos to attach a receipt image to a transaction.",
+          "cameraPermission": "Ledger uses the camera to take a photo of a receipt.",
+          "microphonePermission": false
+        }
+      ],
+      "@config-plugins/detox"
+    ],
+    "experiments": {
+      "reactCompiler": true
+    }
+  }
+}
