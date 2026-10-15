@@ -1,0 +1,35 @@
+{
+  "name": "@ledger/core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Platform-independent app logic: API client, Redux Toolkit store, React Query hooks, formatting and form validation.",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ledger/contracts": "workspace:*",
+    "@reduxjs/toolkit": "^2.13.0",
+    "@tanstack/react-query": "^5.104.2",
+    "react-redux": "^9.3.0",
+    "zod": "^4.6.7"
+  },
+  "peerDependencies": {
+    "react": "*"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "~19.2.2",
+    "jsdom": "^30.1.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.4"
+  }
+}
