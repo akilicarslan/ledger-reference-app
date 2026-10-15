@@ -1,0 +1,49 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+storybook-static/
+coverage/
+*.tsbuildinfo
+
+# Expo
+.expo/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+
+# generated native folders (Continuous Native Generation)
+apps/mobile/ios/
+apps/mobile/android/
+
+# Detox
+apps/mobile/artifacts/
+
+# env
+.env
+.env*.local
+
+# logs
+npm-debug.*
+pnpm-debug.log*
+*.log
+
+# OS
+.DS_Store
+*.pem
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Server runtime data (seed.json is committed; these files are created at run time)
+apps/server/data/ledger.json
+apps/server/data/traces.jsonl
+apps/server/data/*.tmp
+
+# Native build output of the Nitro module
+packages/native-camera/android/.cxx/
+packages/native-camera/android/build/

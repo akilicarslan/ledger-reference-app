@@ -1,0 +1,27 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Expo supports isolated installs from SDK 54. We use the hoisted layout
+# because Jest (jest-expo), Detox and Storybook resolve React Native
+# modules more reliably with it. See docs/adr/0002-pnpm-hoisted-node-linker.md.
+nodeLinker: hoisted
+
+# One React and one React Native copy for the whole repository.
+# Duplicate copies cause runtime errors in Metro and Vite.
+overrides:
+  react: 19.2.3
+  react-dom: 19.2.3
+  react-native: 0.86.3
+
+# pnpm blocks dependency build scripts by default. Allow only what we need.
+allowBuilds:
+  esbuild: true
+  '@scarf/scarf': false
+  # These ship prebuilt binaries; their build scripts are only fallbacks.
+  '@parcel/watcher': false
+  unrs-resolver: false
+  # Detox prepares its iOS framework cache after install.
+  detox: true
+  # Optional native probe of bunyan (a Detox dependency). Not needed.
+  dtrace-provider: false

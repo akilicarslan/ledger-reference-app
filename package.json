@@ -1,0 +1,41 @@
+{
+  "name": "ledger-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Ledger: a simple local account app. Expo React Native, React web, shared UI library and a Node.js mock API.",
+  "packageManager": "pnpm@12.10.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev:server": "pnpm --filter @ledger/server dev",
+    "dev:web": "pnpm --filter @ledger/web dev",
+    "dev:mobile": "pnpm --filter @ledger/mobile start",
+    "storybook": "pnpm --filter @ledger/ui storybook",
+    "build:storybook": "pnpm --filter @ledger/ui build-storybook",
+    "build:web": "pnpm --filter @ledger/web build",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm -r test",
+    "openapi:generate": "pnpm --filter @ledger/server openapi:generate",
+    "openapi:check": "pnpm --filter @ledger/server openapi:check",
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm openapi:check && pnpm compiler:report",
+    "e2e:build:ios": "pnpm --filter @ledger/mobile e2e:build:ios",
+    "e2e:test:ios": "pnpm --filter @ledger/mobile e2e:test:ios",
+    "compiler:report": "tsx scripts/react-compiler-report.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "jiti": "^2.7.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "tsx": "^4.23.15"
+  }
+}
