@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "currency": "USD",
+  "openingBalanceCents": 0,
+  "updatedAt": "2026-10-12T17:25:00.000Z",
+  "transactions": [
+    {
+      "id": "639d0b04-4e62-4a1d-8e79-ee5d68fc8cea",
+      "type": "credit",
+      "amount": 4200,
+      "title": "Salary (September)",
+      "description": "Monthly salary",
+      "dateTime": "2026-09-01T08:30:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 4200,
+      "traceId": "655820badf23ad8994ba95023f1ed4d3"
+    },
+    {
+      "id": "7d1bb063-79fd-4ab9-8099-6046cfef329b",
+      "type": "debit",
+      "amount": 1450,
+      "title": "Rent",
+      "description": "Office rent, September",
+      "dateTime": "2026-09-02T10:05:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 2750,
+      "traceId": "f2e0323cd1fcaabe8c932551e2e1b8a2"
+    },
+    {
+      "id": "f7748a30-2222-480c-88b7-8a719955264c",
+      "type": "debit",
+      "amount": 86.4,
+      "title": "Pharmacy",
+      "description": "Prescription and vitamins",
+      "dateTime": "2026-09-05T16:42:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 2663.6,
+      "traceId": "17ce351795bd101331123009a537ce1e"
+    },
+    {
+      "id": "f3b2ba0d-e618-4c10-8bf7-c69f0ad55f43",
+      "type": "debit",
+      "amount": 64.2,
+      "title": "Office supplies",
+      "description": "Printer paper and toner",
+      "dateTime": "2026-09-09T12:15:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 2599.4,
+      "traceId": "32187e9a7b8983de5b5886aef82550fe"
+    },
+    {
+      "id": "d63c5d3b-ec84-4dfc-82af-8c2eb6f0ff8c",
+      "type": "credit",
+      "amount": 350,
+      "title": "Consulting invoice 1042",
+      "description": "Payment from Acme Health",
+      "dateTime": "2026-09-14T09:00:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 2949.4,
+      "traceId": "3b71d81f9c3ee4fc97f0b3b4c3d567dd"
+    },
+    {
+      "id": "ac2f3010-0498-4fd5-8cd6-96190fb93169",
+      "type": "debit",
+      "amount": 129.99,
+      "title": "Software subscription",
+      "description": "Annual plan, accounting tool",
+      "dateTime": "2026-09-18T14:30:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 2819.41,
+      "traceId": "8a289fc7b0f777bfa801724a4482ccb5"
+    },
+    {
+      "id": "c2ebf395-e066-4cb0-8fe6-87c866144471",
+      "type": "debit",
+      "amount": 200,
+      "title": "Cash withdrawal",
+      "description": "ATM, Main Street",
+      "dateTime": "2026-09-23T18:10:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 2619.41,
+      "traceId": "6a84423c5d54f722cc68093c80ff61e4"
+    },
+    {
+      "id": "cf136f6f-9d28-4d0b-8a57-e392ccd310df",
+      "type": "debit",
+      "amount": 42.75,
+      "title": "Team lunch",
+      "description": "",
+      "dateTime": "2026-09-28T13:05:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 2576.66,
+      "traceId": "9dea44ac89ebe2b6c65ef53e1caeedde"
+    },
+    {
+      "id": "183c5cea-cc65-4b17-8830-b97b3a66a8a3",
+      "type": "credit",
+      "amount": 4200,
+      "title": "Salary (October)",
+      "description": "Monthly salary",
+      "dateTime": "2026-10-01T08:30:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 6776.66,
+      "traceId": "8fa622b0c7f63bcb8ca7468ec40dd75f"
+    },
+    {
+      "id": "1efae9da-565e-445c-8c20-58a99a269158",
+      "type": "debit",
+      "amount": 1450,
+      "title": "Rent",
+      "description": "Office rent, October",
+      "dateTime": "2026-10-02T10:02:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 5326.66,
+      "traceId": "a97492e3a09258dde289915ac4adbd61"
+    },
+    {
+      "id": "bb329b45-935d-4166-839b-a941a5ba7824",
+      "type": "debit",
+      "amount": 310,
+      "title": "Medical equipment",
+      "description": "Blood pressure monitor",
+      "dateTime": "2026-10-06T11:20:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 5016.66,
+      "traceId": "29c128e8c4f9dbfb40aa645511a4c35a"
+    },
+    {
+      "id": "920df7ec-cd7a-4310-8377-c1c509120697",
+      "type": "debit",
+      "amount": 58.3,
+      "title": "Internet",
+      "description": "Fiber connection, October",
+      "dateTime": "2026-10-10T15:45:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 4958.36,
+      "traceId": "680435473d90fc1260d02c1b003f71f7"
+    },
+    {
+      "id": "db3b4286-df36-4dd3-88e5-fd14cb21be44",
+      "type": "credit",
+      "amount": 120.5,
+      "title": "Refund",
+      "description": "Returned keyboard",
+      "dateTime": "2026-10-12T17:25:00.000Z",
+      "receiptImage": null,
+      "balanceAfter": 5078.86,
+      "traceId": "4df6350d5304e1b18ece2ba66910d362"
+    }
+  ]
+}

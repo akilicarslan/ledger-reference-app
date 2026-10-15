@@ -1,0 +1,866 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Ledger mock API",
+    "version": "1.0.0",
+    "description": "HTTP API for the Ledger local account app.\n\nRules:\n- The API sends 200 OK for a successful request.\n- The API sends 500 Internal Server Error for all errors. Use `error.code` to identify the error.\n- A transaction that makes the balance less than 0 is refused with the code `INSUFFICIENT_FUNDS`.\n- Send `idempotency-key: <UUID v4>` with `POST /transactions`. A retry with the same key does not record the transaction two times.\n- The stock endpoints add a random delay and fail at random. Use them to test retry and fallback logic.\n\nTracing (W3C Trace Context):\n- Send `traceparent: 00-<traceId>-<spanId>-01` to join a trace. If you do not send it, the server starts a new trace.\n- Each response has `x-request-id` (the trace ID) and `traceparent` (the server span).\n- Error bodies and recorded transactions have `traceId`. `GET /api/v1/traces/{traceId}` sends the server events of a trace."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000",
+      "description": "Local mock server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Account",
+      "description": "Balance and transactions."
+    },
+    {
+      "name": "Stocks",
+      "description": "Mock market data with random delay and random failure."
+    },
+    {
+      "name": "System",
+      "description": "Service status."
+    },
+    {
+      "name": "Diagnostics",
+      "description": "End-to-end request traces."
+    }
+  ],
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getHealth",
+        "summary": "Get the service status",
+        "responses": {
+          "200": {
+            "description": "The service is available.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "headers": {
+              "traceparent": {
+                "$ref": "#/components/headers/Traceparent"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Traceparent"
+          }
+        ]
+      }
+    },
+    "/api/v1/balance": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "operationId": "getBalance",
+        "summary": "Read the current account balance",
+        "responses": {
+          "200": {
+            "description": "The current balance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Balance"
+                }
+              }
+            },
+            "headers": {
+              "traceparent": {
+                "$ref": "#/components/headers/Traceparent"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Traceparent"
+          }
+        ]
+      }
+    },
+    "/api/v1/transactions": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "operationId": "listRecentTransactions",
+        "summary": "Read the last transactions (default: last 5)",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Traceparent"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Number of transactions to send.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 5
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The transactions. The newest transaction is first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionList"
+                }
+              }
+            },
+            "headers": {
+              "traceparent": {
+                "$ref": "#/components/headers/Traceparent"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "operationId": "createTransaction",
+        "summary": "Write one transaction",
+        "description": "Records one debit or credit. If the debit makes the balance less than 0, the server refuses the transaction and sends `INSUFFICIENT_FUNDS`. Send an `idempotency-key` header to make a retry safe: the server records each key only one time.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Traceparent"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewTransaction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The transaction is recorded, or it was recorded before with the same idempotency key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTransactionResult"
+                }
+              }
+            },
+            "headers": {
+              "traceparent": {
+                "$ref": "#/components/headers/Traceparent"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              },
+              "idempotent-replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/v1/stocks/quotes": {
+      "get": {
+        "tags": [
+          "Stocks"
+        ],
+        "operationId": "getStockQuotes",
+        "summary": "Read mock quotes for one or more symbols",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Traceparent"
+          },
+          {
+            "name": "symbols",
+            "in": "query",
+            "required": true,
+            "description": "Comma-separated list of symbols. Maximum: 20.",
+            "schema": {
+              "type": "string",
+              "example": "AAPL,MSFT"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The quotes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockQuoteList"
+                }
+              }
+            },
+            "headers": {
+              "traceparent": {
+                "$ref": "#/components/headers/Traceparent"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/v1/stocks/search": {
+      "get": {
+        "tags": [
+          "Stocks"
+        ],
+        "operationId": "searchStocks",
+        "summary": "Find stocks by symbol or name",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Traceparent"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Search text. Length: 1 to 20 characters.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching stocks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockSearchResult"
+                }
+              }
+            },
+            "headers": {
+              "traceparent": {
+                "$ref": "#/components/headers/Traceparent"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/v1/traces/{traceId}": {
+      "get": {
+        "tags": [
+          "Diagnostics"
+        ],
+        "operationId": "getTrace",
+        "summary": "Read the server events of one user action",
+        "description": "Use the Reference ID that the app shows. A trace with no events sends an empty list (200).",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Traceparent"
+          },
+          {
+            "name": "traceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/TraceId"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The events of the trace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trace"
+                }
+              }
+            },
+            "headers": {
+              "traceparent": {
+                "$ref": "#/components/headers/Traceparent"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TraceId": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{32}$",
+        "description": "W3C trace ID: 32 lowercase hex characters. One ID for one user action.",
+        "example": "4bf92f3577b34da6a3ce929d0e0e4736"
+      },
+      "SpanId": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{16}$",
+        "description": "W3C span ID: 16 lowercase hex characters."
+      },
+      "TraceEvent": {
+        "type": "object",
+        "properties": {
+          "traceId": {
+            "$ref": "#/components/schemas/TraceId"
+          },
+          "spanId": {
+            "$ref": "#/components/schemas/SpanId"
+          },
+          "parentSpanId": {
+            "description": "The span of the caller (the client request).",
+            "$ref": "#/components/schemas/SpanId"
+          },
+          "name": {
+            "type": "string",
+            "example": "ledger.transaction.refused"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "durationMs": {
+            "type": "number",
+            "minimum": 0
+          },
+          "attributes": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string"
+            },
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          }
+        },
+        "required": [
+          "traceId",
+          "spanId",
+          "name",
+          "at",
+          "attributes"
+        ],
+        "additionalProperties": false,
+        "description": "One step that the server did for a request."
+      },
+      "Trace": {
+        "type": "object",
+        "properties": {
+          "traceId": {
+            "$ref": "#/components/schemas/TraceId"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceEvent"
+            },
+            "description": "Oldest event first. Empty if the server has no events."
+          }
+        },
+        "required": [
+          "traceId",
+          "events"
+        ],
+        "additionalProperties": false,
+        "description": "All server events of one user action."
+      },
+      "IdempotencyKey": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+        "description": "UUID v4 that identifies one write. Send the same key again to retry the same write safely.",
+        "example": "6f1c2a3e-8b4d-4f0a-9c1e-2d3b4a5c6d7e"
+      },
+      "IsoDateTime": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+        "description": "Date and time in ISO 8601 format.",
+        "example": "2026-10-13T09:30:00.000Z"
+      },
+      "Currency": {
+        "type": "string",
+        "const": "USD",
+        "description": "ISO 4217 currency code. The account uses one currency."
+      },
+      "TransactionType": {
+        "type": "string",
+        "enum": [
+          "debit",
+          "credit"
+        ],
+        "description": "`credit` adds money to the account. `debit` removes money from the account."
+      },
+      "Amount": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "maximum": 1000000000,
+        "multipleOf": 0.01,
+        "description": "Unsigned floating-point amount with a maximum of 2 decimal places. The value must be more than 0.",
+        "example": 42.5
+      },
+      "ReceiptImage": {
+        "type": "string",
+        "maxLength": 1500000,
+        "pattern": "^data:image\\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$",
+        "description": "Optional receipt image as a base64 data URI (PNG, JPEG or WebP)."
+      },
+      "NewTransaction": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "example": "Office supplies"
+          },
+          "description": {
+            "default": "",
+            "example": "Printer paper and toner",
+            "type": "string",
+            "maxLength": 500
+          },
+          "dateTime": {
+            "description": "Time of the transaction. If you do not send it, the server uses the current time.",
+            "$ref": "#/components/schemas/IsoDateTime"
+          },
+          "receiptImage": {
+            "$ref": "#/components/schemas/ReceiptImage"
+          }
+        },
+        "required": [
+          "type",
+          "amount",
+          "title"
+        ],
+        "description": "The data to record one transaction."
+      },
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Amount"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dateTime": {
+            "$ref": "#/components/schemas/IsoDateTime"
+          },
+          "receiptImage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReceiptImage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "balanceAfter": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Account balance after this transaction."
+          },
+          "traceId": {
+            "description": "Trace ID of the request that recorded the transaction (the \"Reference ID\" in the UI).",
+            "$ref": "#/components/schemas/TraceId"
+          },
+          "idempotencyKey": {
+            "description": "The `idempotency-key` header of the request that recorded the transaction.",
+            "$ref": "#/components/schemas/IdempotencyKey"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "amount",
+          "title",
+          "description",
+          "dateTime",
+          "receiptImage",
+          "balanceAfter",
+          "traceId"
+        ],
+        "additionalProperties": false,
+        "description": "One recorded transaction."
+      },
+      "Balance": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Current balance. It is never less than 0.",
+            "example": 1250.75
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/IsoDateTime"
+          }
+        },
+        "required": [
+          "amount",
+          "currency",
+          "updatedAt"
+        ],
+        "additionalProperties": false,
+        "description": "The current account balance."
+      },
+      "TransactionList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transaction"
+            },
+            "description": "Newest transaction first."
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "additionalProperties": false,
+        "description": "The most recent transactions."
+      },
+      "CreateTransactionResult": {
+        "type": "object",
+        "properties": {
+          "transaction": {
+            "$ref": "#/components/schemas/Transaction"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/Balance"
+          }
+        },
+        "required": [
+          "transaction",
+          "balance"
+        ],
+        "additionalProperties": false,
+        "description": "The recorded transaction and the new balance."
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "INSUFFICIENT_FUNDS",
+          "VALIDATION_FAILED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "UPSTREAM_UNAVAILABLE",
+          "INTERNAL_ERROR"
+        ],
+        "description": "Machine-readable error code. The API sends HTTP 500 for all errors (assignment rule), so clients must use this code, not the HTTP status."
+      },
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "$ref": "#/components/schemas/ErrorCode"
+              },
+              "message": {
+                "type": "string",
+                "description": "Message that the UI can show to the user."
+              },
+              "details": {
+                "description": "Field errors. Only for VALIDATION_FAILED.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "traceId": {
+                "description": "Trace ID of the failed request. Give it to support to find the server logs.",
+                "$ref": "#/components/schemas/TraceId"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false,
+        "description": "Error response."
+      },
+      "StockSymbol": {
+        "type": "string",
+        "pattern": "^[A-Z.]{1,10}$",
+        "example": "AAPL"
+      },
+      "StockQuote": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "$ref": "#/components/schemas/StockSymbol"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "change": {
+            "type": "number"
+          },
+          "changePercent": {
+            "type": "number"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/Currency"
+          },
+          "asOf": {
+            "$ref": "#/components/schemas/IsoDateTime"
+          }
+        },
+        "required": [
+          "symbol",
+          "name",
+          "price",
+          "change",
+          "changePercent",
+          "currency",
+          "asOf"
+        ],
+        "additionalProperties": false,
+        "description": "Mock market price for one stock."
+      },
+      "StockQuoteList": {
+        "type": "object",
+        "properties": {
+          "quotes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StockQuote"
+            }
+          }
+        },
+        "required": [
+          "quotes"
+        ],
+        "additionalProperties": false,
+        "description": "Quotes for the requested symbols. Unknown symbols are not included."
+      },
+      "StockSearchResult": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "symbol": {
+                  "$ref": "#/components/schemas/StockSymbol"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "symbol",
+                "name"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "additionalProperties": false,
+        "description": "Stocks that match the search text."
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok"
+          },
+          "uptimeSeconds": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "status",
+          "uptimeSeconds"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "parameters": {
+      "Traceparent": {
+        "name": "traceparent",
+        "in": "header",
+        "required": false,
+        "description": "W3C Trace Context header of the client span. The server continues this trace.",
+        "schema": {
+          "type": "string",
+          "pattern": "^00-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$"
+        },
+        "example": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+      },
+      "IdempotencyKey": {
+        "name": "idempotency-key",
+        "in": "header",
+        "required": false,
+        "description": "One key for one write. A retry with the same key and the same body does not record a second transaction. The same key with a different body gives `IDEMPOTENCY_KEY_REUSED`.",
+        "schema": {
+          "$ref": "#/components/schemas/IdempotencyKey"
+        }
+      }
+    },
+    "headers": {
+      "Traceparent": {
+        "description": "W3C Trace Context header of the server span.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "RequestId": {
+        "description": "The trace ID of the request (32 hex characters).",
+        "schema": {
+          "$ref": "#/components/schemas/TraceId"
+        }
+      },
+      "IdempotentReplayed": {
+        "description": "`true` when the server did not record a new transaction, because it already had one with this idempotency key.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "true",
+            "false"
+          ]
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "The request failed. Read `error.code` and `error.message`.",
+        "headers": {
+          "traceparent": {
+            "$ref": "#/components/headers/Traceparent"
+          },
+          "x-request-id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorBody"
+            }
+          }
+        }
+      }
+    }
+  }
+}

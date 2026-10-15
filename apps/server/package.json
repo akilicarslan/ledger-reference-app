@@ -1,0 +1,34 @@
+{
+  "name": "@ledger/server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Node.js mock API for Ledger. Express 5, Zod validation, OpenAPI 3.1 and Swagger UI.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit -p .",
+    "test": "vitest run",
+    "openapi:generate": "tsx scripts/openapi.ts write",
+    "openapi:check": "tsx scripts/openapi.ts check",
+    "data:seed": "tsx scripts/data.ts seed",
+    "data:reset": "tsx scripts/data.ts reset"
+  },
+  "dependencies": {
+    "@ledger/contracts": "workspace:*",
+    "express": "^5.3.0",
+    "swagger-ui-express": "^5.0.1",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@readme/openapi-parser": "^9.1.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.0.0",
+    "@types/supertest": "^7.2.1",
+    "@types/swagger-ui-express": "^4.1.8",
+    "supertest": "^7.3.1",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.4"
+  }
+}
