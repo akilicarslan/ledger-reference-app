@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint, unit tests, contract and compiler checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm test
+      - name: OpenAPI document is up to date
+        run: pnpm openapi:check
+      - name: React Compiler compiles all components
+        run: pnpm compiler:report
+      - name: Storybook builds
+        run: pnpm build:storybook
+      - name: Web app builds
+        run: pnpm build:web
+
+  e2e-ios:
+    name: Detox (iOS simulator)
+    # Expensive job: run it on main only.
+    if: github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: brew tap wix/brew && brew install wix/brew/applesimutils
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm e2e:build:ios
+      - run: pnpm e2e:test:ios -- --headless --record-logs failing
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detox-artifacts
+          path: apps/mobile/artifacts
