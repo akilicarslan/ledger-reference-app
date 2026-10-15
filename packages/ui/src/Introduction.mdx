@@ -1,0 +1,26 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# Ledger UI
+
+Ledger UI is the shared component library of the Ledger apps.
+The components use React Native primitives only.
+The mobile app renders them with React Native.
+The web app and this Storybook render them with react-native-web.
+
+## Rules
+
+1. Use the theme tokens. Do not use literal colors or sizes.
+2. Give each interactive element a role, an accessible name and a state.
+3. Make each touch target 48 × 48 or larger.
+4. Show errors and states in text. Do not use color only.
+5. Put status messages in a `LiveRegion`.
+
+## Accessibility check
+
+Open the **Accessibility** panel for each story.
+The panel runs axe-core with the WCAG 2.1 A and AA rules.
+Use the **Theme** toolbar to check the light and the dark theme.
+
+Read `docs/ACCESSIBILITY.md` and `.claude/skills/shared-ui-library/SKILL.md` for the full rules.
