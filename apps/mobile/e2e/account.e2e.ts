@@ -10,6 +10,9 @@ import { scrollIntoView as scrollTo } from './scroll';
  */
 
 const TIMEOUT = 15_000;
+// The first start after a fresh install is slow on a shared CI runner: the
+// main thread stays busy for more than 15 s before the first balance shows.
+const FIRST_START_TIMEOUT = 60_000;
 
 // A field error or the software keyboard can push a control below the visible
 // area, so each control is fully visible before the test uses it.
@@ -35,7 +38,7 @@ describe('Ledger account', () => {
   it('shows a balance of $0.00 and an empty history at the first start', async () => {
     await waitFor(element(by.id(TestIds.balance.amount)))
       .toHaveText('$0.00')
-      .withTimeout(TIMEOUT);
+      .withTimeout(FIRST_START_TIMEOUT);
   });
 
   it('shows field errors when the user submits an empty form', async () => {
