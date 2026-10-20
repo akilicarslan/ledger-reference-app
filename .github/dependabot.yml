@@ -1,0 +1,32 @@
+# Weekly dependency updates. Expo SDK, React Native and React change together
+# (see `npx expo install --check`), so Dependabot does not open major updates for them.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      dependencies:
+        dependency-type: production
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: 'expo'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'expo-*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-native'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

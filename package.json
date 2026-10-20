@@ -1,7 +1,8 @@
 {
-  "name": "ledger-monorepo",
+  "name": "ledger-reference-app",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Ledger: a simple local account app. Expo React Native, React web, shared UI library and a Node.js mock API.",
   "packageManager": "pnpm@12.10.1",
