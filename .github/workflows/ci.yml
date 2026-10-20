@@ -40,9 +40,12 @@ jobs:
     # Expensive job: run it on main only.
     if: github.ref == 'refs/heads/main'
     needs: verify
-    runs-on: macos-15
+    # Expo SDK 57 and React Native 0.86 need Xcode 26 (Swift 6.2).
+    runs-on: macos-26
     timeout-minutes: 60
     steps:
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
