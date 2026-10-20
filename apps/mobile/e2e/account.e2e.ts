@@ -11,12 +11,19 @@ import { scrollIntoView as scrollTo } from './scroll';
 
 const TIMEOUT = 15_000;
 
+// A field error or the software keyboard can push a control below the visible
+// area, so each control is fully visible before the test uses it.
+const FULLY = { visiblePercent: 100 };
+
 async function recordTransaction(type: 'credit' | 'debit', title: string, amount: string) {
-  await scrollTo(type === 'credit' ? TestIds.form.typeCredit : TestIds.form.typeDebit);
-  await element(by.id(type === 'credit' ? TestIds.form.typeCredit : TestIds.form.typeDebit)).tap();
+  const typeOption = type === 'credit' ? TestIds.form.typeCredit : TestIds.form.typeDebit;
+  await scrollTo(typeOption, FULLY);
+  await element(by.id(typeOption)).tap();
+  await scrollTo(TestIds.form.title, FULLY);
   await element(by.id(TestIds.form.title)).replaceText(title);
+  await scrollTo(TestIds.form.amount, FULLY);
   await element(by.id(TestIds.form.amount)).replaceText(amount);
-  await scrollTo(TestIds.form.submit);
+  await scrollTo(TestIds.form.submit, FULLY);
   await element(by.id(TestIds.form.submit)).tap();
 }
 
@@ -32,7 +39,7 @@ describe('Ledger account', () => {
   });
 
   it('shows field errors when the user submits an empty form', async () => {
-    await scrollTo(TestIds.form.submit);
+    await scrollTo(TestIds.form.submit, FULLY);
     await element(by.id(TestIds.form.submit)).tap();
     await scrollTo(`${TestIds.form.title}-error`);
     await expect(element(by.text('Enter a title.'))).toBeVisible();
