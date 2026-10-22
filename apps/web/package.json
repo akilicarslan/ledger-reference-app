@@ -15,8 +15,8 @@
     "@ledger/core": "workspace:*",
     "@ledger/features": "workspace:*",
     "@ledger/ui": "workspace:*",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "react-native-web": "^0.21.4"
   },
   "devDependencies": {
@@ -24,8 +24,8 @@
     "@rolldown/plugin-babel": "^0.2.4",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^24.0.0",
-    "@types/react": "~19.2.2",
-    "@types/react-dom": "~19.2.2",
+    "@types/react": "~19.3.0",
+    "@types/react-dom": "~19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "babel-plugin-react-compiler": "1.0.0",
     "react-native": "0.86.3",
