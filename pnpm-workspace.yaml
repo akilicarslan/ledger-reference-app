@@ -13,6 +13,16 @@ overrides:
   react: 19.2.3
   react-dom: 19.2.3
   react-native: 0.86.3
+  # Security fixes for transitive dependencies (Dependabot alerts).
+  # Each selector lifts only the vulnerable versions, in the same major line.
+  # Remove an entry when its parent package depends on the fixed version.
+  body-parser@>=2 <2.4.0: ^2.4.0
+  fast-uri@>=3 <3.1.9: ^3.1.9
+  qs@>=6.7.0 <6.16.1: ^6.16.1
+  undici@>=6 <6.29.1: ^6.29.1
+  undici@>=8 <8.12.2: ^8.12.2
+  # xcode (Expo config plugins) calls only uuid.v4(), which uuid 11 keeps in CommonJS.
+  uuid@<11.1.1: ^11.1.1
 
 # pnpm blocks dependency build scripts by default. Allow only what we need.
 allowBuilds:
