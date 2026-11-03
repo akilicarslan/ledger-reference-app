@@ -129,3 +129,12 @@ export const Trace = z
 export type TraceEventName = z.infer<typeof TraceEventName>;
 export type TraceEvent = z.infer<typeof TraceEvent>;
 export type Trace = z.infer<typeof Trace>;
+
+/**
+ * True when the newest event is `http.response.sent`. The server records this
+ * event last, after it sends the response, so a client can read a trace
+ * before the event is there.
+ */
+export function isTraceComplete({ events }: Pick<Trace, 'events'>): boolean {
+  return events[events.length - 1]?.name === 'http.response.sent';
+}

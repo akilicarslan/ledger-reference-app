@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildOpenApiDocument,
   formatTraceparent,
+  isTraceComplete,
   newSpanId,
   newTraceContext,
   newTraceId,
@@ -78,6 +79,16 @@ describe('trace event names', () => {
 
   it('refuses a name that is not in the set', () => {
     expect(TraceEvent.safeParse({ ...event, name: 'ledger.transaction.lost' }).success).toBe(false);
+  });
+
+  it('marks a trace complete only when http.response.sent is the newest event', () => {
+    const received = { ...event, name: 'http.request.received' as const };
+    const sent = { ...event, name: 'http.response.sent' as const };
+    expect(isTraceComplete({ events: [] })).toBe(false);
+    expect(isTraceComplete({ events: [received] })).toBe(false);
+    expect(isTraceComplete({ events: [received, sent] })).toBe(true);
+    // A retried write: the first attempt is complete, the second is not.
+    expect(isTraceComplete({ events: [received, sent, received] })).toBe(false);
   });
 });
 

@@ -72,6 +72,7 @@ sequenceDiagram
 3. The server always answers with `x-request-id`. If the client sends no valid `traceparent`, the server starts a new trace.
 4. A client error without a server answer (for example `NETWORK_ERROR`) still has the client trace ID. The user can give it to support.
 5. The trace endpoint, the health check and the API documents are not traced, so they do not fill the log.
+6. The server records `http.response.sent` after it sends the response, so the app can read a trace before this event is there. `useServerTrace` reads the trace again until `isTraceComplete` (`packages/contracts/src/trace.ts`) is true, a maximum of 5 times.
 
 ## 5. Server events
 
