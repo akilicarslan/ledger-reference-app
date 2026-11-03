@@ -1,6 +1,7 @@
 import { forwardRef, useId, useState } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import { webOnlyProps } from '../a11y/platform';
+import { textFieldTestIds } from '../testIdParts';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/tokens';
 import { Text } from './Text';
@@ -90,7 +91,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
         <View
           style={styles.errorRow}
           nativeID={errorId}
-          testID={testID ? `${testID}-error` : undefined}
+          testID={testID ? textFieldTestIds(testID).error : undefined}
         >
           <Text aria-hidden variant="label" tone="danger">
             ⚠

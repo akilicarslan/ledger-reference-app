@@ -1,8 +1,15 @@
+import type { TraceEventName } from '@ledger/contracts';
+
 /**
  * Test IDs. The screens, the unit tests and the Detox tests import them from
  * this file, so a rename cannot break a test without a type error.
- * This file has no imports: Detox (Node.js) can load it.
+ * Detox (Node.js) loads this file, so it imports only types and modules with
+ * no imports. To get the ID of a part inside a component (for example the
+ * error text of a field), use the part functions below:
+ * `bannerTestIds(TestIds.form.errorBanner).reference`.
  */
+export { attachmentTestIds, bannerTestIds, textFieldTestIds } from '@ledger/ui/testIdParts';
+
 export const TestIds = {
   tabs: {
     account: 'tab-account',
@@ -36,7 +43,7 @@ export const TestIds = {
     card: 'request-trace',
     id: 'request-trace-id',
     events: 'request-trace-events',
-    event: (name: string) => `trace-event-${name}`,
+    event: (name: TraceEventName) => `trace-event-${name}`,
   },
   markets: {
     screen: 'markets-screen',

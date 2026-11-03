@@ -2,7 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setErrorReporter, type ApiClient, type ErrorReport } from '@ledger/core';
-import { AppProviders, ErrorBoundary, TestIds } from '../src';
+import { AppProviders, ErrorBoundary, TestIds, bannerTestIds } from '../src';
 
 const api = {} as ApiClient;
 
@@ -40,9 +40,9 @@ describe('ErrorBoundary', () => {
     const [report] = reports;
     expect(report).toMatchObject({ source: 'render', error: { message: 'Render failed' } });
     expect(report?.componentStack).toContain('Unstable');
-    expect(screen.getByTestId(`${TestIds.errorBoundary.fallback}-reference`).textContent).toBe(
-      `Reference ID: ${report?.reportId}`,
-    );
+    expect(
+      screen.getByTestId(bannerTestIds(TestIds.errorBoundary.fallback).reference).textContent,
+    ).toBe(`Reference ID: ${report?.reportId}`);
 
     shouldThrow = false;
     fireEvent.click(screen.getByTestId(TestIds.errorBoundary.retry));

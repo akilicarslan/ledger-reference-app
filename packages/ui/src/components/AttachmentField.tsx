@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
+import { attachmentTestIds } from '../testIdParts';
 import { useThemedStyles } from '../theme/ThemeProvider';
 import type { Theme } from '../theme/tokens';
 import { Button } from './Button';
@@ -53,6 +54,7 @@ export function AttachmentField({
 }: AttachmentFieldProps) {
   const styles = useThemedStyles(createStyles);
   const hasImage = Boolean(preview || imageUri);
+  const parts = testID ? attachmentTestIds(testID) : undefined;
   return (
     <View style={styles.container} testID={testID}>
       <Text variant="label">{label}</Text>
@@ -63,10 +65,7 @@ export function AttachmentField({
       ) : null}
       <View style={styles.row}>
         {preview ? (
-          <View
-            style={styles.previewFrame}
-            testID={testID ? `${testID}-native-preview` : undefined}
-          >
+          <View style={styles.previewFrame} testID={parts?.nativePreview}>
             {preview}
           </View>
         ) : imageUri ? (
@@ -75,7 +74,7 @@ export function AttachmentField({
             role="img"
             accessibilityLabel={imageAccessibilityLabel}
             style={styles.thumbnail}
-            testID={testID ? `${testID}-preview` : undefined}
+            testID={parts?.preview}
           />
         ) : null}
         <View style={styles.actions}>
@@ -87,7 +86,7 @@ export function AttachmentField({
               onPress={onTakePhoto}
               loading={busy}
               accessibilityHint="Opens the camera."
-              testID={testID ? `${testID}-camera` : undefined}
+              testID={parts?.camera}
             />
           ) : null}
           <Button
@@ -98,7 +97,7 @@ export function AttachmentField({
             loading={busy && !onTakePhoto}
             disabled={busy}
             accessibilityHint="Opens the photo library."
-            testID={testID ? `${testID}-pick` : undefined}
+            testID={parts?.pick}
           />
           {hasImage ? (
             <Button
@@ -106,13 +105,13 @@ export function AttachmentField({
               variant="ghost"
               onPress={onRemove}
               disabled={busy}
-              testID={testID ? `${testID}-remove` : undefined}
+              testID={parts?.remove}
             />
           ) : null}
         </View>
       </View>
       {details ? (
-        <Text variant="caption" tone="muted" testID={testID ? `${testID}-details` : undefined}>
+        <Text variant="caption" tone="muted" testID={parts?.details}>
           {details}
         </Text>
       ) : null}

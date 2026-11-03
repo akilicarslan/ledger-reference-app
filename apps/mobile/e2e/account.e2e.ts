@@ -1,6 +1,7 @@
 import { expect as jestExpect } from '@jest/globals';
 import { by, device, element, expect, waitFor } from 'detox';
-import { TestIds } from '@ledger/features/testIds';
+import { insufficientFundsMessage } from '@ledger/contracts';
+import { TestIds, bannerTestIds, textFieldTestIds } from '@ledger/features/testIds';
 import { E2E_API_URL } from './mockServer';
 import { scrollIntoView as scrollTo } from './scroll';
 
@@ -44,7 +45,7 @@ describe('Ledger account', () => {
   it('shows field errors when the user submits an empty form', async () => {
     await scrollTo(TestIds.form.submit, FULLY);
     await element(by.id(TestIds.form.submit)).tap();
-    await scrollTo(`${TestIds.form.title}-error`);
+    await scrollTo(textFieldTestIds(TestIds.form.title).error);
     await expect(element(by.text('Enter a title.'))).toBeVisible();
   });
 
@@ -68,15 +69,16 @@ describe('Ledger account', () => {
   it('refuses a debit that makes the balance negative and shows the server message', async () => {
     await recordTransaction('debit', 'New laptop', '5000');
     await scrollTo(TestIds.form.errorBanner);
-    await expect(element(by.id(`${TestIds.form.errorBanner}-message`))).toHaveText(
-      'The transaction is refused. The balance cannot go below $0.00. Available balance: $1,300.25.',
+    // The text comes from the contract, so a change of the server text does not fail this test.
+    await expect(element(by.id(bannerTestIds(TestIds.form.errorBanner).message))).toHaveText(
+      insufficientFundsMessage(130_025),
     );
     await scrollTo(TestIds.balance.amount);
     await expect(element(by.id(TestIds.balance.amount))).toHaveText('$1,300.25');
   });
 
   it('traces the refused debit end to end: the UI reference is the server trace', async () => {
-    const referenceId = `${TestIds.form.errorBanner}-reference`;
+    const referenceId = bannerTestIds(TestIds.form.errorBanner).reference;
     await scrollTo(referenceId);
     const attributes = await element(by.id(referenceId)).getAttributes();
     const text = 'text' in attributes ? String(attributes.text) : '';

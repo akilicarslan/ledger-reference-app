@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { bannerTestIds } from '../testIdParts';
 import { useTheme, useThemedStyles } from '../theme/ThemeProvider';
 import type { ColorTokens, Theme } from '../theme/tokens';
 import { Button } from './Button';
@@ -68,6 +69,7 @@ export function Banner({ tone, message, title, action, reference, testID }: Bann
   const theme = useTheme();
   const styles = useThemedStyles(createStyles);
   const config = TONES[tone];
+  const parts = testID ? bannerTestIds(testID) : undefined;
 
   return (
     <View
@@ -88,7 +90,7 @@ export function Banner({ tone, message, title, action, reference, testID }: Bann
           <Text variant="bodyStrong" tone={config.text}>
             {title ?? config.title}
           </Text>
-          <Text variant="body" tone={config.text} testID={testID ? `${testID}-message` : undefined}>
+          <Text variant="body" tone={config.text} testID={parts?.message}>
             {message}
           </Text>
           {reference ? (
@@ -97,7 +99,7 @@ export function Banner({ tone, message, title, action, reference, testID }: Bann
               tone={config.text}
               selectable
               style={styles.reference}
-              testID={testID ? `${testID}-reference` : undefined}
+              testID={parts?.reference}
             >
               {`Reference ID: ${reference}`}
             </Text>

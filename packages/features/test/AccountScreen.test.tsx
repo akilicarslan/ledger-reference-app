@@ -2,7 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeApi } from '@ledger/core/testing';
-import { AppProviders, AppShell, TestIds, type PlatformServices } from '../src';
+import { AppProviders, AppShell, TestIds, bannerTestIds, type PlatformServices } from '../src';
 
 const services: PlatformServices = { pickImage: vi.fn(async () => null) };
 
@@ -83,7 +83,8 @@ describe('Account screen (shared by mobile and web)', () => {
     expect(banner.textContent).toContain('Transaction refused');
     expect(banner.textContent).toContain('Available balance: $20.00.');
     // End-to-end trace: the banner reference, the trace card and the server events agree.
-    const reference = screen.getByTestId(`${TestIds.form.errorBanner}-reference`).textContent ?? '';
+    const reference =
+      screen.getByTestId(bannerTestIds(TestIds.form.errorBanner).reference).textContent ?? '';
     const traceId = reference.replace('Reference ID: ', '');
     expect(traceId).toMatch(/^[0-9a-f]{32}$/);
     expect(byTestId(TestIds.trace.id).textContent).toBe(traceId);
