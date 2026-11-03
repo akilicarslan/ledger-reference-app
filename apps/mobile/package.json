@@ -5,18 +5,19 @@
   "dependencies": {
     "@ledger/core": "workspace:*",
     "@ledger/features": "workspace:*",
+    "@ledger/native-camera": "workspace:*",
     "@ledger/ui": "workspace:*",
     "@tanstack/react-query": "^5.104.2",
     "expo": "~57.0.28",
     "expo-constants": "~57.0.21",
+    "expo-dev-client": "~57.0.20",
     "expo-image-picker": "~57.0.20",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
     "react": "19.2.3",
     "react-native": "0.86.3",
-    "react-native-safe-area-context": "~5.7.0",
-    "@ledger/native-camera": "workspace:*",
-    "react-native-nitro-modules": "^0.37.1"
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-safe-area-context": "~5.7.0"
   },
   "devDependencies": {
     "@config-plugins/detox": "^11.0.0",
