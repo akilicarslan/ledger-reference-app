@@ -47,7 +47,7 @@
 5. [Quality gates](#quality-gates)
 6. [Known limits and next steps](#known-limits-and-next-steps)
 7. [Quick start](#quick-start)
-8. [Reference](#reference): features, structure, setup, tests, HTTP API, accessibility, AI workflow, troubleshooting
+8. [Reference](#reference): features, start the apps, tests, HTTP API, troubleshooting
 
 ## Highlights
 
@@ -129,6 +129,21 @@ flowchart LR
   server --> contracts
 ```
 
+```text
+apps/
+  mobile/      Expo React Native app (iOS, Android). Jest tests and Detox tests.
+  web/         React web app (Vite + react-native-web). Same screens as mobile.
+  server/      Node.js mock API (Express 5, Zod, OpenAPI 3.1, Swagger UI).
+packages/
+  contracts/   Zod schemas, TypeScript types, OpenAPI document builder. Server and clients use it.
+  core/        Platform-independent logic: API client, Redux store, React Query hooks, formatting.
+  ui/          Design system: tokens, accessible components, Storybook.
+  features/    Shared screens: Account, Markets. Mobile and web use them.
+  native-camera/ Nitro native module (Swift, Kotlin): camera, shared pixel memory, PhotoView.
+docs/          Plan, architecture, accessibility, decisions (ADR).
+.claude/       AI skills and settings.
+```
+
 The rules that keep this structure:
 
 - An app can use a package. A package cannot use an app.
@@ -189,17 +204,25 @@ Other evidence: the contrast test checks each text and background token pair in 
 
 ## Quick start
 
-You need Node.js 22.12 or later and Corepack. The web app needs no Xcode.
+| Tool                        | Version                         | Necessary for            |
+| --------------------------- | ------------------------------- | ------------------------ |
+| Node.js                     | 22.12 or later (24 recommended) | All                      |
+| pnpm                        | 12 (`corepack enable`)          | All                      |
+| Xcode and an iOS simulator  | Xcode 26 or later               | iOS app, iOS Detox tests |
+| Android Studio, an emulator | API 35 or later                 | Android app              |
+| applesimutils               | latest                          | iOS Detox tests only     |
+
+The web app needs only Node.js and pnpm. Run these commands from the repository root:
 
 ```sh
-corepack enable
+corepack enable   # gives the correct pnpm version
 pnpm install
 pnpm dev:server   # terminal 1: API on http://localhost:4000, Swagger UI on /docs
 pnpm dev:web      # terminal 2: web app on http://localhost:5173
-pnpm verify       # typecheck, lint, 212 unit tests, OpenAPI check, React Compiler report
+pnpm verify       # the first five quality gates
 ```
 
-For the iOS and Android apps, Storybook and the Detox tests, read [Start the apps](#5-start-the-apps).
+For the iOS and Android apps, Storybook and the Detox tests, read [Start the apps](#2-start-the-apps).
 
 ## Reference
 
@@ -207,81 +230,28 @@ The sections below are the full setup and reference material.
 
 ### 1. Feature map
 
-| Requirement                                                                                  | Where                                                                                                                                                              |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Record one transaction (date/time, amount, type, description)                                | `packages/features/src/account/TransactionForm.tsx`                                                                                                                |
-| Refuse a transaction that makes the balance negative                                         | `apps/server/src/domain/ledger.ts` (server rule), error shown in the form banner                                                                                   |
-| Show the account balance                                                                     | `packages/features/src/account/BalanceCard.tsx`                                                                                                                    |
-| Show the last 5 transactions                                                                 | `packages/features/src/account/RecentTransactions.tsx`                                                                                                             |
-| HTTP API: read balance, read last 5, write one, only 200 or 500                              | `apps/server/src/app.ts`, [OpenAPI document](apps/server/openapi.json)                                                                                             |
-| Title, description and image for expenses                                                    | `NewTransaction` schema in `packages/contracts/src/schemas.ts`                                                                                                     |
-| Global state (Redux Toolkit)                                                                 | `packages/core/src/store/`                                                                                                                                         |
-| Stock data with React Query (slow, fail, retry, debounce, fallback)                          | `packages/core/src/stocks/`, `packages/features/src/markets/MarketsScreen.tsx`                                                                                     |
-| Shared UI library for web and mobile, with Storybook                                         | `packages/ui/`                                                                                                                                                     |
-| OpenAPI document, validated with Zod                                                         | `packages/contracts/src/openapi.ts`, `apps/server/openapi.json`                                                                                                    |
-| Unit tests and Detox tests                                                                   | `**/test/`, `apps/mobile/__tests__/`, `apps/mobile/e2e/`                                                                                                           |
-| WCAG 2.1 AA (Section 504)                                                                    | [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md)                                                                                                                     |
-| Two AI skills                                                                                | [.claude/skills/shared-ui-library](.claude/skills/shared-ui-library/SKILL.md), [.claude/skills/accessibility-review](.claude/skills/accessibility-review/SKILL.md) |
-| Take a receipt photo with a native Nitro module; share pixels with JS through an ArrayBuffer | `packages/native-camera`, [docs/NATIVE-CAMERA.md](docs/NATIVE-CAMERA.md)                                                                                           |
-| Trace one user request end to end (Reference ID)                                             | [docs/TRACING.md](docs/TRACING.md)                                                                                                                                 |
-| Keep the data in a local JSON file, with showcase data                                       | `apps/server/data/`, [docs/DATA-STORAGE.md](docs/DATA-STORAGE.md)                                                                                                  |
+| Requirement                                                                                  | Where                                                                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Record one transaction (date/time, amount, type, description)                                | `packages/features/src/account/TransactionForm.tsx`                                                                                                                                                            |
+| Refuse a transaction that makes the balance negative                                         | `apps/server/src/domain/ledger.ts` (server rule), error shown in the form banner                                                                                                                               |
+| Show the account balance                                                                     | `packages/features/src/account/BalanceCard.tsx`                                                                                                                                                                |
+| Show the last 5 transactions                                                                 | `packages/features/src/account/RecentTransactions.tsx`                                                                                                                                                         |
+| HTTP API: read balance, read last 5, write one, only 200 or 500                              | `apps/server/src/app.ts`, [OpenAPI document](apps/server/openapi.json)                                                                                                                                         |
+| Title, description and image for expenses                                                    | `NewTransaction` schema in `packages/contracts/src/schemas.ts`                                                                                                                                                 |
+| Global state (Redux Toolkit)                                                                 | `packages/core/src/store/`                                                                                                                                                                                     |
+| Stock data with React Query (slow, fail, retry, debounce, fallback)                          | `packages/core/src/stocks/`, `packages/features/src/markets/MarketsScreen.tsx`                                                                                                                                 |
+| Shared UI library for web and mobile, with Storybook                                         | `packages/ui/`                                                                                                                                                                                                 |
+| OpenAPI document, validated with Zod                                                         | `packages/contracts/src/openapi.ts`, `apps/server/openapi.json`                                                                                                                                                |
+| Unit tests and Detox tests                                                                   | `**/test/`, `apps/mobile/__tests__/`, `apps/mobile/e2e/`                                                                                                                                                       |
+| WCAG 2.1 AA (Section 504)                                                                    | [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md): conformance table, VoiceOver and TalkBack test procedure                                                                                                       |
+| Two AI skills: add or change a `packages/ui` component; WCAG 2.1 AA review of a screen       | [.claude/skills/shared-ui-library](.claude/skills/shared-ui-library/SKILL.md), [.claude/skills/accessibility-review](.claude/skills/accessibility-review/SKILL.md), [docs/AI-WORKFLOW.md](docs/AI-WORKFLOW.md) |
+| Take a receipt photo with a native Nitro module; share pixels with JS through an ArrayBuffer | `packages/native-camera`, [docs/NATIVE-CAMERA.md](docs/NATIVE-CAMERA.md)                                                                                                                                       |
+| Trace one user request end to end (Reference ID)                                             | [docs/TRACING.md](docs/TRACING.md)                                                                                                                                                                             |
+| Keep the data in a local JSON file, with showcase data                                       | `apps/server/data/`, [docs/DATA-STORAGE.md](docs/DATA-STORAGE.md)                                                                                                                                              |
 
-### 2. Repository structure
+### 2. Start the apps
 
-The repository uses an `apps/` and `packages/` split.
-An app can use a package. A package cannot use an app.
-
-```text
-apps/
-  mobile/      Expo React Native app (iOS, Android). Jest tests and Detox tests.
-  web/         React web app (Vite + react-native-web). Same screens as mobile.
-  server/      Node.js mock API (Express 5, Zod, OpenAPI 3.1, Swagger UI).
-packages/
-  contracts/   Zod schemas, TypeScript types, OpenAPI document builder. Server and clients use it.
-  core/        Platform-independent logic: API client, Redux store, React Query hooks, formatting.
-  ui/          Design system: tokens, accessible components, Storybook.
-  features/    Shared screens: Account, Markets. Mobile and web use them.
-  native-camera/ Nitro native module (Swift, Kotlin): camera, shared pixel memory, PhotoView.
-docs/          Plan, architecture, accessibility, decisions (ADR).
-.claude/       AI skills and settings.
-```
-
-The dependency direction is: `contracts` → `core` → `features` ← `ui`. The apps use `features`.
-Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full description.
-
-### 3. Requirements
-
-| Tool                        | Version                         | Necessary for                             |
-| --------------------------- | ------------------------------- | ----------------------------------------- |
-| Node.js                     | 22.12 or later (24 recommended) | All                                       |
-| pnpm                        | 12 (`corepack enable`)          | All                                       |
-| Xcode and an iOS simulator  | Xcode 26 or later               | iOS app, iOS Detox tests                  |
-| Android Studio, an emulator | API 35 or later                 | Android app (no Android end-to-end tests) |
-| applesimutils               | latest                          | iOS Detox tests only                      |
-
-### 4. Install
-
-1. Enable Corepack. This gives the correct pnpm version.
-
-   ```sh
-   corepack enable
-   ```
-
-2. Install the dependencies from the repository root.
-
-   ```sh
-   pnpm install
-   ```
-
-3. Make sure that the checks pass.
-
-   ```sh
-   pnpm verify
-   ```
-
-### 5. Start the apps
-
-#### 5.1 Start the mock API
+#### 2.1 Start the mock API
 
 Start the API first. The web app and the mobile app use it.
 
@@ -317,7 +287,7 @@ CHAOS_FAILURE_RATE=1 pnpm dev:server
 
 > NOTE: The server keeps the ledger in `apps/server/data/ledger.json`. At the first start it copies 13 showcase transactions from `data/seed.json`. To start again from the showcase data, run `pnpm --filter @ledger/server data:reset`. Read [docs/DATA-STORAGE.md](docs/DATA-STORAGE.md).
 
-#### 5.2 Start the web app
+#### 2.2 Start the web app
 
 ```sh
 pnpm dev:web
@@ -325,13 +295,13 @@ pnpm dev:web
 
 Open http://localhost:5173. To use a different API, set `VITE_API_URL`.
 
-#### 5.3 Start the mobile app
+#### 2.3 Start the mobile app
 
 The app uses native modules (the image picker and the Nitro camera module in `packages/native-camera`), so it needs a development build. Expo Go is not sufficient.
 
 On the iOS simulator there is no camera. The "Take photo" button then gives a generated sample receipt, so you can see the native preview and the shared-memory details. On a device or on the Android emulator, the system camera opens.
 
-1. Start the API (step 5.1).
+1. Start the API (step 2.1).
 2. Build and start the iOS app on a simulator.
 
    ```sh
@@ -350,7 +320,7 @@ The app finds the API in this order:
 2. The host of the Metro server (for a physical device on the same network).
 3. `http://localhost:4000` on iOS, `http://10.0.2.2:4000` on Android.
 
-#### 5.4 Start Storybook
+#### 2.4 Start Storybook
 
 ```sh
 pnpm storybook
@@ -359,7 +329,7 @@ pnpm storybook
 Open http://localhost:6006. Use the **Theme** toolbar to see the light and dark themes.
 Use the **Accessibility** panel to see the axe-core results for each story.
 
-### 6. Run the tests
+### 3. Run the tests
 
 Run all unit tests:
 
@@ -377,23 +347,13 @@ pnpm test
 | `apps/mobile`            | Jest (jest-expo) + RNTL 14 | Native accessibility mapping (roles, states, hints) of the same screens  |
 | `packages/native-camera` | Vitest                     | Pixel analysis on an RGBA ArrayBuffer (row padding, sampling, luminance) |
 
-Other checks:
+For the other checks, read [Quality gates](#quality-gates).
 
-```sh
-pnpm typecheck        # TypeScript in all packages
-pnpm lint             # ESLint, including the "use @ledger/ui" rule
-pnpm openapi:check    # apps/server/openapi.json agrees with the Zod schemas
-pnpm compiler:report  # the React Compiler compiles all components (no bail-outs)
-pnpm verify           # all of the above
-```
-
-### 7. Run the Detox end-to-end tests (iOS)
+### 4. Run the Detox end-to-end tests (iOS)
 
 The Detox tests start the mock API themselves. The API uses no chaos and an empty ledger.
 
 > CAUTION: Stop `pnpm dev:server` before you run the Detox tests. The tests need port 4000 and an empty ledger.
-
-#### 7.1 iOS
 
 1. Install applesimutils.
 
@@ -417,11 +377,7 @@ The configuration uses an "iPhone 17 Pro" simulator. To use a different simulato
 
 Last result: 8 of 8 tests passed on 2026-10-15 (iPhone 17 Pro, iOS 26.5, release build). See [docs/REVIEWER-GUIDE.md](docs/REVIEWER-GUIDE.md), section 4.1.
 
-#### 7.2 Android
-
-The Detox tests run on iOS only. The Android app builds and runs (`pnpm --filter @ledger/mobile android`), but the project has no Android end-to-end tests.
-
-### 8. HTTP API
+### 5. HTTP API
 
 The [OpenAPI document](apps/server/openapi.json) is the reference. Swagger UI shows it at http://localhost:4000/docs.
 
@@ -466,20 +422,7 @@ curl -X POST http://localhost:4000/api/v1/transactions \
 
 Send the same command again. The server does not record a second transaction. It sends the first transaction and the header `idempotent-replayed: true`. Read [ADR 0011](docs/adr/0011-idempotency-key-for-writes.md).
 
-### 9. Accessibility
-
-The app follows WCAG 2.1 Level AA, as Section 504 of the Rehabilitation Act requires for patient-facing healthcare apps.
-[docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) gives the conformance table and the manual test procedure for VoiceOver and TalkBack.
-
-### 10. AI in the development process
-
-[docs/AI-WORKFLOW.md](docs/AI-WORKFLOW.md) tells how we used an AI coding agent and how we control its output.
-The repository includes the agent instructions ([CLAUDE.md](CLAUDE.md)) and two skills:
-
-- `shared-ui-library`: rules to add or change a component in `packages/ui`.
-- `accessibility-review`: a WCAG 2.1 AA review procedure for React Native screens.
-
-### 11. Troubleshooting
+### 6. Troubleshooting
 
 | Problem                                                      | Cause                                                           | Action                                                                                                  |
 | ------------------------------------------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
