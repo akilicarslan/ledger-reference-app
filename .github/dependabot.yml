@@ -19,11 +19,27 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: 'expo-*'
         update-types: ['version-update:semver-major']
+      - dependency-name: 'jest-expo'
+        update-types: ['version-update:semver-major']
       - dependency-name: 'react-native'
         update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      # These packages have the same version as React Native.
+      - dependency-name: '@react-native/*'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      # The Expo SDK sets these versions. Use `npx expo install --fix` in apps/mobile.
+      - dependency-name: 'react-native-safe-area-context'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      # pnpm-workspace.yaml pins one React version for the Expo SDK.
       - dependency-name: 'react'
-        update-types: ['version-update:semver-major']
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
       - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: '@types/react'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: '@types/react-dom'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      # CI and the engines field use Node.js 24. Update the types with Node.js.
+      - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
