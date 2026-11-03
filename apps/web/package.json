@@ -15,8 +15,8 @@
     "@ledger/core": "workspace:*",
     "@ledger/features": "workspace:*",
     "@ledger/ui": "workspace:*",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
     "react-native-web": "^0.21.4"
   },
   "devDependencies": {
