@@ -5,6 +5,7 @@ import {
   IDEMPOTENCY_KEY_HEADER,
   IDEMPOTENT_REPLAYED_HEADER,
   IdempotencyKey,
+  MAX_RECEIPT_IMAGE_LENGTH,
   NewTransaction,
   REQUEST_ID_HEADER,
   TRACEPARENT_HEADER,
@@ -40,8 +41,11 @@ export interface AppDeps {
   logRequests: boolean;
 }
 
-/** JSON body limit. It allows one receipt image (see MAX_RECEIPT_IMAGE_LENGTH). */
-const JSON_BODY_LIMIT = '2mb';
+/**
+ * JSON body limit in bytes: one receipt image of the maximum length, plus
+ * 64 KiB for the other fields. A body that is larger gets VALIDATION_FAILED.
+ */
+export const JSON_BODY_LIMIT_BYTES = MAX_RECEIPT_IMAGE_LENGTH + 64 * 1024;
 
 /**
  * CORS for local development. The web app and Storybook run on other ports.
@@ -79,14 +83,14 @@ export function createApp(deps: AppDeps): Express {
       skipPrefixes: ['/api/v1/traces', '/docs', '/openapi.json', '/api/v1/health'],
     }),
   );
-  app.use(express.json({ limit: JSON_BODY_LIMIT }));
+  app.use(express.json({ limit: JSON_BODY_LIMIT_BYTES }));
 
   const api = express.Router();
 
   api.get('/health', (_req, res) => {
     const body: Health = {
       status: 'ok',
-      uptimeSeconds: Math.round((Date.now() - deps.startedAt.getTime()) / 1000),
+      uptimeSeconds: Math.round((deps.now().getTime() - deps.startedAt.getTime()) / 1000),
     };
     res.json(body);
   });

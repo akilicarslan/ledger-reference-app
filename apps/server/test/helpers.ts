@@ -21,8 +21,10 @@ export function newTestLedger(repository: LedgerRepository = new InMemoryLedgerR
   return new Ledger({ now: () => FIXED_NOW, newId: sequentialIds(), repository });
 }
 
-export function createTestApp(chaos: Partial<ChaosOptions> = {}) {
-  const now = () => FIXED_NOW;
+export function createTestApp(
+  chaos: Partial<ChaosOptions> = {},
+  now: () => Date = () => FIXED_NOW,
+) {
   const repository = new InMemoryLedgerRepository();
   const ledger = newTestLedger(repository);
   const traces = new TraceStore();
@@ -40,7 +42,7 @@ export function createTestApp(chaos: Partial<ChaosOptions> = {}) {
       ...chaos,
     },
     publicUrl: 'http://localhost:4000',
-    startedAt: now(),
+    startedAt: FIXED_NOW,
     log: () => {},
     logRequests: false,
   });

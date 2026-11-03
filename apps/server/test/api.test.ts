@@ -5,11 +5,14 @@ import {
   Balance,
   CreateTransactionResult,
   ErrorBody,
+  Health,
+  MAX_RECEIPT_IMAGE_LENGTH,
   StockQuoteList,
   StockSearchResult,
   TransactionList,
 } from '@ledger/contracts';
-import { createTestApp } from './helpers';
+import { JSON_BODY_LIMIT_BYTES } from '../src/app';
+import { FIXED_NOW, createTestApp } from './helpers';
 
 describe('account API', () => {
   it('GET /api/v1/balance sends 200 and a valid Balance', async () => {
@@ -71,6 +74,34 @@ describe('account API', () => {
       .send('{"type":')
       .expect(500);
     expect(ErrorBody.parse(response.body).error.code).toBe('VALIDATION_FAILED');
+  });
+
+  it('accepts a receipt image of the maximum length that the contract allows', async () => {
+    const { app } = createTestApp();
+    const prefix = 'data:image/png;base64,';
+    const receiptImage = prefix + 'A'.repeat(MAX_RECEIPT_IMAGE_LENGTH - prefix.length);
+    await request(app)
+      .post('/api/v1/transactions')
+      .send({ type: 'credit', amount: 1, title: 'Receipt', receiptImage })
+      .expect(200);
+  });
+
+  it('refuses a body larger than the body limit with VALIDATION_FAILED', async () => {
+    const { app } = createTestApp();
+    const response = await request(app)
+      .post('/api/v1/transactions')
+      .send({ type: 'credit', amount: 1, title: 'x'.repeat(JSON_BODY_LIMIT_BYTES) })
+      .expect(500);
+    expect(ErrorBody.parse(response.body).error).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      message: 'The request body is too large.',
+    });
+  });
+
+  it('GET /api/v1/health calculates the uptime with the server clock', async () => {
+    const { app } = createTestApp({}, () => new Date(FIXED_NOW.getTime() + 90_000));
+    const response = await request(app).get('/api/v1/health').expect(200);
+    expect(Health.parse(response.body)).toMatchObject({ status: 'ok', uptimeSeconds: 90 });
   });
 
   it('GET /api/v1/transactions sends the last 5 transactions, newest first', async () => {
