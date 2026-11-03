@@ -1,7 +1,13 @@
 import type { ErrorRequestHandler } from 'express';
 import { ZodError } from 'zod';
-import { fromCents, type ErrorBody, type ErrorCode } from '@ledger/contracts';
+import {
+  IDEMPOTENCY_KEY_REUSED_MESSAGE,
+  insufficientFundsMessage,
+  type ErrorBody,
+  type ErrorCode,
+} from '@ledger/contracts';
 import { IdempotencyKeyReusedError, InsufficientFundsError } from '../domain/ledger';
+import { traceFailure } from '../tracing/ledgerEvents';
 import type { RequestTrace } from '../tracing/requestTrace';
 
 /** A failure that the API reports with a known error code. */
@@ -22,14 +28,12 @@ export class HttpError extends Error {
  */
 export const ERROR_STATUS = 500;
 
-const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
-
 export function toErrorBody(error: unknown): ErrorBody {
   if (error instanceof InsufficientFundsError) {
     return {
       error: {
         code: 'INSUFFICIENT_FUNDS',
-        message: `The transaction is refused. The balance cannot go below ${usd.format(0)}. Available balance: ${usd.format(fromCents(error.availableCents))}.`,
+        message: insufficientFundsMessage(error.availableCents),
       },
     };
   }
@@ -37,8 +41,7 @@ export function toErrorBody(error: unknown): ErrorBody {
     return {
       error: {
         code: 'IDEMPOTENCY_KEY_REUSED',
-        message:
-          'The server already recorded a different transaction with this request key. Submit the form again.',
+        message: IDEMPOTENCY_KEY_REUSED_MESSAGE,
       },
     };
   }
@@ -94,18 +97,7 @@ export function errorHandler(log: (message: string) => void): ErrorRequestHandle
     const trace = res.locals.trace as RequestTrace | undefined;
     if (trace) {
       body.error.traceId = trace.traceId;
-      if (error instanceof InsufficientFundsError) {
-        trace.event('ledger.transaction.refused', {
-          reason: 'INSUFFICIENT_FUNDS',
-          availableCents: error.availableCents,
-          requestedCents: error.requestedCents,
-        });
-      } else if (error instanceof IdempotencyKeyReusedError) {
-        trace.event('ledger.idempotency.conflict', { transactionId: error.transactionId });
-      } else if (body.error.code === 'VALIDATION_FAILED') {
-        trace.event('validation.failed', { issues: body.error.details?.length ?? 1 });
-      }
-      trace.event('http.error', { code: body.error.code });
+      traceFailure(trace, error, body);
     }
     if (body.error.code === 'INTERNAL_ERROR') {
       log(

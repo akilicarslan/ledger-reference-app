@@ -1,7 +1,6 @@
 import { QueryClient } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import type { Balance, NewTransactionInput, Transaction } from '@ledger/contracts';
-import { ApiError, type ApiClient } from '@ledger/core';
+import { createFakeApi } from '@ledger/core/testing';
 import { AppProviders, AppShell, TestIds } from '@ledger/features';
 
 /**
@@ -10,40 +9,6 @@ import { AppProviders, AppShell, TestIds } from '@ledger/features';
  * that VoiceOver and TalkBack receive.
  */
 
-const NOW = '2026-10-13T09:00:00.000Z';
-
-function createMemoryApi(): ApiClient {
-  let cents = 0;
-  const items: Transaction[] = [];
-  const balance = (): Balance => ({ amount: cents / 100, currency: 'USD', updatedAt: NOW });
-  return {
-    getBalance: async () => balance(),
-    getRecentTransactions: async (limit = 5) => items.slice(0, limit),
-    createTransaction: async (input: NewTransactionInput, options) => {
-      const delta = Math.round(input.amount * 100) * (input.type === 'credit' ? 1 : -1);
-      if (cents + delta < 0)
-        throw new ApiError('INSUFFICIENT_FUNDS', 'The transaction is refused.');
-      cents += delta;
-      const transaction: Transaction = {
-        id: `00000000-0000-4000-8000-${String(items.length + 1).padStart(12, '0')}`,
-        type: input.type,
-        amount: input.amount,
-        title: input.title,
-        description: input.description ?? '',
-        dateTime: input.dateTime ?? NOW,
-        receiptImage: null,
-        balanceAfter: cents / 100,
-        traceId: options?.traceId ?? 'f'.repeat(32),
-      };
-      items.unshift(transaction);
-      return { transaction, balance: balance() };
-    },
-    getStockQuotes: async () => [],
-    searchStocks: async () => [],
-    getTrace: async (traceId) => ({ traceId, events: [] }),
-  };
-}
-
 function renderApp() {
   const queryClient = new QueryClient({
     // gcTime Infinity: no cache timers stay open after a test (Jest worker exits cleanly).
@@ -51,7 +16,7 @@ function renderApp() {
   });
   return render(
     <AppProviders
-      api={createMemoryApi()}
+      api={createFakeApi()}
       services={{ pickImage: async () => null }}
       queryClient={queryClient}
       scheme="light"

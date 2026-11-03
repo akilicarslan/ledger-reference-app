@@ -6,6 +6,7 @@ import {
   newSpanId,
   newTraceId,
   parseTraceparent,
+  type TraceEventName,
 } from '@ledger/contracts';
 import type { TraceStore } from './traceStore';
 
@@ -33,7 +34,7 @@ export class RequestTrace {
     return Math.round((performance.now() - this.startedAt) * 10) / 10;
   }
 
-  event(name: string, attributes: Attributes = {}, durationMs?: number): void {
+  event(name: TraceEventName, attributes: Attributes = {}, durationMs?: number): void {
     const at = this.now().toISOString();
     this.store.record({
       traceId: this.traceId,

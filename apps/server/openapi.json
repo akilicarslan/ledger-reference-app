@@ -360,6 +360,24 @@
         "pattern": "^[0-9a-f]{16}$",
         "description": "W3C span ID: 16 lowercase hex characters."
       },
+      "TraceEventName": {
+        "type": "string",
+        "enum": [
+          "http.request.received",
+          "validation.passed",
+          "validation.failed",
+          "ledger.transaction.recorded",
+          "ledger.transaction.refused",
+          "ledger.transaction.replayed",
+          "ledger.idempotency.conflict",
+          "chaos.delay",
+          "chaos.failure",
+          "http.error",
+          "http.response.sent"
+        ],
+        "description": "Name of one server step. The set is closed.",
+        "example": "ledger.transaction.refused"
+      },
       "TraceEvent": {
         "type": "object",
         "properties": {
@@ -374,8 +392,7 @@
             "$ref": "#/components/schemas/SpanId"
           },
           "name": {
-            "type": "string",
-            "example": "ledger.transaction.refused"
+            "$ref": "#/components/schemas/TraceEventName"
           },
           "at": {
             "type": "string",

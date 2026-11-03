@@ -1,11 +1,14 @@
 import { View } from 'react-native';
-import type { TraceEvent } from '@ledger/contracts';
+import type { TraceEvent, TraceEventName } from '@ledger/contracts';
 import { formatTime, useServerTrace, type ClientTrace } from '@ledger/core';
 import { Badge, Button, Card, List, ListItem, Text, useTheme, type BadgeTone } from '@ledger/ui';
 import { TestIds } from '../testIds';
 
-/** Plain-language names for the server events (ASD-STE100). */
-const EVENT_LABELS: Record<string, { label: string; tone: BadgeTone }> = {
+/**
+ * Plain-language names for the server events (ASD-STE100). The record must
+ * have each `TraceEventName`, so a new server event without a label stops the build.
+ */
+const EVENT_LABELS: Record<TraceEventName, { label: string; tone: BadgeTone }> = {
   'http.request.received': { label: 'The server received the request', tone: 'info' },
   'validation.passed': { label: 'The request data is correct', tone: 'success' },
   'validation.failed': { label: 'The request data is not correct', tone: 'danger' },
@@ -22,13 +25,11 @@ const EVENT_LABELS: Record<string, { label: string; tone: BadgeTone }> = {
     label: 'The ledger refused the transaction (balance too low)',
     tone: 'danger',
   },
+  'chaos.delay': { label: 'The server added a test delay', tone: 'neutral' },
+  'chaos.failure': { label: 'The server added a test failure', tone: 'danger' },
   'http.error': { label: 'The server sent an error', tone: 'danger' },
   'http.response.sent': { label: 'The server sent the response', tone: 'info' },
 };
-
-function describeEvent(event: TraceEvent): { label: string; tone: BadgeTone } {
-  return EVENT_LABELS[event.name] ?? { label: event.name, tone: 'neutral' };
-}
 
 /** Selected attributes for the row subtitle. */
 function eventDetails(event: TraceEvent): string | undefined {
@@ -42,6 +43,7 @@ function eventDetails(event: TraceEvent): string | undefined {
     parts.push(`transaction ${attributes.transactionId.slice(0, 8)}`);
   if (typeof attributes.availableCents === 'number')
     parts.push(`available ${(attributes.availableCents / 100).toFixed(2)}`);
+  if (typeof attributes.latencyMs === 'number') parts.push(`delay ${attributes.latencyMs} ms`);
   if (event.durationMs !== undefined) parts.push(`${event.durationMs} ms`);
   return parts.length > 0 ? parts.join(' · ') : undefined;
 }
@@ -105,7 +107,7 @@ export function RequestTraceCard({ trace }: RequestTraceCardProps) {
       ) : (
         <List accessibilityLabel="Server events" testID={TestIds.trace.events}>
           {server.events.map((event, index) => {
-            const { label, tone } = describeEvent(event);
+            const { label, tone } = EVENT_LABELS[event.name];
             const elapsed =
               typeof event.attributes.elapsedMs === 'number' ? event.attributes.elapsedMs : 0;
             const details = eventDetails(event);

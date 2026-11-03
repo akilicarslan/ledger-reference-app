@@ -3,13 +3,13 @@ import { fetchAccount, submitStatusCleared, submitTransaction } from '../src/sto
 import { symbolAdded, symbolRemoved, MAX_WATCHLIST_LENGTH } from '../src/store/marketsSlice';
 import { createLedgerStore } from '../src/store/store';
 import { ApiError } from '../src/api/errors';
-import { createFakeApi } from './fakes';
+import { createSpiedApi } from './fakes';
 import { draftFieldChanged } from '../src/store/transactionDraftSlice';
 import { EMPTY_DRAFT } from '../src/forms/transactionForm';
 
 describe('account slice', () => {
   it('loads the balance and the recent transactions', async () => {
-    const api = createFakeApi(40);
+    const api = createSpiedApi(40);
     const store = createLedgerStore(api);
     await store.dispatch(fetchAccount());
     const { account } = store.getState();
@@ -18,7 +18,7 @@ describe('account slice', () => {
   });
 
   it('keeps the load error for the UI', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     api.getBalance.mockRejectedValueOnce(new ApiError('NETWORK_ERROR', 'No connection.'));
     const store = createLedgerStore(api);
     await store.dispatch(fetchAccount());
@@ -29,7 +29,7 @@ describe('account slice', () => {
   });
 
   it('updates the balance and puts the new transaction first, with a maximum of 5', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     const store = createLedgerStore(api);
     for (let index = 1; index <= 6; index += 1) {
       await store.dispatch(
@@ -50,7 +50,7 @@ describe('account slice', () => {
   });
 
   it('surfaces INSUFFICIENT_FUNDS to the UI and keeps the old balance', async () => {
-    const api = createFakeApi(10);
+    const api = createSpiedApi(10);
     const store = createLedgerStore(api);
     await store.dispatch(fetchAccount());
     await store.dispatch(
@@ -74,7 +74,7 @@ describe('account slice', () => {
   });
 
   it('does not send a second request while a submit is in progress', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     const store = createLedgerStore(api);
     const first = store.dispatch(
       submitTransaction({ input: { type: 'credit', amount: 1, title: 'a' } }),
@@ -89,7 +89,7 @@ describe('account slice', () => {
 
 describe('tracing of user actions', () => {
   it('uses one trace ID for the two reads of "load account"', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     const store = createLedgerStore(api);
     await store.dispatch(fetchAccount());
     const balanceTrace = api.getBalance.mock.calls[0]?.[0]?.traceId;
@@ -99,7 +99,7 @@ describe('tracing of user actions', () => {
   });
 
   it('stores the trace on success; the server copy is on the transaction', async () => {
-    const store = createLedgerStore(createFakeApi());
+    const store = createLedgerStore(createSpiedApi());
     await store.dispatch(submitTransaction({ input: { type: 'credit', amount: 5, title: 'Pay' } }));
     const { submit } = store.getState().account;
     expect(submit.trace?.durationMs).toBeGreaterThanOrEqual(0);
@@ -107,7 +107,7 @@ describe('tracing of user actions', () => {
   });
 
   it('gives each user action a new trace ID', async () => {
-    const store = createLedgerStore(createFakeApi());
+    const store = createLedgerStore(createSpiedApi());
     await store.dispatch(submitTransaction({ input: { type: 'credit', amount: 5, title: 'a' } }));
     const first = store.getState().account.submit.trace?.traceId;
     await store.dispatch(submitTransaction({ input: { type: 'credit', amount: 5, title: 'b' } }));
@@ -117,7 +117,7 @@ describe('tracing of user actions', () => {
 
 describe('markets slice', () => {
   it('adds a symbol only once and removes it', () => {
-    const store = createLedgerStore(createFakeApi());
+    const store = createLedgerStore(createSpiedApi());
     store.dispatch(symbolAdded('pfe'));
     store.dispatch(symbolAdded('PFE'));
     expect(store.getState().markets.watchlist.filter((symbol) => symbol === 'PFE')).toHaveLength(1);
@@ -126,7 +126,7 @@ describe('markets slice', () => {
   });
 
   it('does not add more than the maximum number of symbols', () => {
-    const store = createLedgerStore(createFakeApi());
+    const store = createLedgerStore(createSpiedApi());
     for (const symbol of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'])
       store.dispatch(symbolAdded(symbol));
     expect(store.getState().markets.watchlist).toHaveLength(MAX_WATCHLIST_LENGTH);
@@ -135,7 +135,7 @@ describe('markets slice', () => {
 
 describe('transaction draft slice', () => {
   it('keeps typed values and clears them after a successful submit, but keeps the type', async () => {
-    const store = createLedgerStore(createFakeApi());
+    const store = createLedgerStore(createSpiedApi());
     store.dispatch(draftFieldChanged('type', 'credit'));
     store.dispatch(draftFieldChanged('title', 'Salary'));
     store.dispatch(draftFieldChanged('amount', '100'));
@@ -154,7 +154,7 @@ describe('transaction draft slice', () => {
   });
 
   it('keeps the values when the server refuses the transaction', async () => {
-    const store = createLedgerStore(createFakeApi(0));
+    const store = createLedgerStore(createSpiedApi(0));
     store.dispatch(draftFieldChanged('title', 'Laptop'));
     await store.dispatch(
       submitTransaction({ input: { type: 'debit', amount: 900, title: 'Laptop' } }),
@@ -168,7 +168,7 @@ describe('safe retry of a write (idempotency key)', () => {
   const input = { type: 'credit', amount: 5, title: 'Pay' } as const;
 
   it('retries a timeout with the same key and the same trace ID', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     api.createTransaction.mockRejectedValueOnce(new ApiError('TIMEOUT', 'No answer.'));
     const store = createLedgerStore(api, undefined, { writeRetryDelaysMs: [0, 0] });
     await store.dispatch(submitTransaction({ input, idempotencyKey: KEY }));
@@ -184,7 +184,7 @@ describe('safe retry of a write (idempotency key)', () => {
   });
 
   it('stops after the last retry and shows the error', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     api.createTransaction.mockRejectedValue(new ApiError('NETWORK_ERROR', 'No connection.'));
     const store = createLedgerStore(api, undefined, { writeRetryDelaysMs: [0, 0] });
     await store.dispatch(submitTransaction({ input }));
@@ -197,14 +197,14 @@ describe('safe retry of a write (idempotency key)', () => {
   });
 
   it('does not retry a business error', async () => {
-    const api = createFakeApi(0);
+    const api = createSpiedApi(0);
     const store = createLedgerStore(api, undefined, { writeRetryDelaysMs: [0, 0] });
     await store.dispatch(submitTransaction({ input: { ...input, type: 'debit' } }));
     expect(api.createTransaction).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the draft key until a value changes or the submit succeeds', async () => {
-    const api = createFakeApi(0);
+    const api = createSpiedApi(0);
     const store = createLedgerStore(api, undefined, { writeRetryDelaysMs: [] });
     const initial = store.getState().transactionDraft.idempotencyKey;
 
@@ -225,7 +225,7 @@ describe('safe retry of a write (idempotency key)', () => {
 
 describe('fetchAccount cancellation', () => {
   it('does not show an error when the request is cancelled', async () => {
-    const store = createLedgerStore(createFakeApi());
+    const store = createLedgerStore(createSpiedApi());
     const request = store.dispatch(fetchAccount());
     request.abort();
     await request;

@@ -7,7 +7,7 @@ import {
 } from '../src/diagnostics/errorReporting';
 import { submitTransaction } from '../src/store/accountSlice';
 import { createLedgerStore } from '../src/store/store';
-import { createFakeApi } from './fakes';
+import { createSpiedApi } from './fakes';
 
 afterEach(clearBreadcrumbs);
 
@@ -15,7 +15,7 @@ describe('error reporting', () => {
   it('sends a report with a new Reference ID and the last action types', async () => {
     const reports: ErrorReport[] = [];
     const restore = setErrorReporter((report) => reports.push(report));
-    const store = createLedgerStore(createFakeApi(0));
+    const store = createLedgerStore(createSpiedApi(0));
     await store.dispatch(
       submitTransaction({ input: { type: 'debit', amount: 99, title: 'Private title' } }),
     );
@@ -39,7 +39,7 @@ describe('error reporting', () => {
   it('does not put form values or amounts in the report (privacy)', async () => {
     let captured: ErrorReport | undefined;
     const restore = setErrorReporter((report) => (captured = report));
-    const store = createLedgerStore(createFakeApi(0));
+    const store = createLedgerStore(createSpiedApi(0));
     await store.dispatch(
       submitTransaction({ input: { type: 'debit', amount: 4321.99, title: 'Private title' } }),
     );

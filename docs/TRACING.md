@@ -88,6 +88,12 @@ sequenceDiagram
 | `http.error`                   | The server sends an error.                                        | `code`                                                      |
 | `http.response.sent`           | The response is sent.                                             | `status`, duration                                          |
 
+The names are a closed set: `TraceEventName` in `packages/contracts/src/trace.ts`. To add an event, add the name there first. Then:
+
+- Emit it on the server. `RequestTrace.event` accepts only a `TraceEventName`. The events of a ledger write come from one module, `apps/server/src/tracing/ledgerEvents.ts`. The write route and the error handler report the outcome to it.
+- Give it a label in the Request trace card (`EVENT_LABELS`). The record must have each name, so a missing label stops the build.
+- If a write emits it, add it to the test fake `createFakeApi` (`@ledger/core/testing`).
+
 An automatic retry of a write (see [ADR 0011](adr/0011-idempotency-key-for-writes.md)) uses the same trace ID. The trace then has the events of each attempt, and the Request trace card shows the number of attempts.
 
 Each event also has `elapsedMs`: the time since the server received the request.

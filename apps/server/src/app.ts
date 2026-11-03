@@ -24,6 +24,7 @@ import type { Ledger } from './domain/ledger';
 import type { StockMarket } from './domain/stocks';
 import { chaos, type ChaosOptions } from './http/chaos';
 import { errorHandler } from './http/errors';
+import { traceWriteAccepted, traceWriteResult } from './tracing/ledgerEvents';
 import { traceOf, tracing } from './tracing/requestTrace';
 import type { TraceStore } from './tracing/traceStore';
 
@@ -107,36 +108,14 @@ export function createApp(deps: AppDeps): Express {
     const idempotencyKey = IdempotencyKey.optional().parse(
       req.get(IDEMPOTENCY_KEY_HEADER) || undefined,
     );
-    trace.event('validation.passed', {
-      type: input.type,
-      hasReceiptImage: Boolean(input.receiptImage),
-      hasIdempotencyKey: Boolean(idempotencyKey),
-    });
+    traceWriteAccepted(trace, input, idempotencyKey);
     const start = performance.now();
     const { replayed, ...body } = deps.ledger.record(input, {
       traceId: trace.traceId,
       ...(idempotencyKey ? { idempotencyKey } : {}),
     });
     res.setHeader(IDEMPOTENT_REPLAYED_HEADER, String(replayed));
-    if (replayed) {
-      // A retry of a write that the server already did. Nothing changed.
-      trace.event('ledger.transaction.replayed', {
-        transactionId: body.transaction.id,
-        originalTraceId: body.transaction.traceId,
-      });
-      res.json(body satisfies CreateTransactionResult);
-      return;
-    }
-    trace.event(
-      'ledger.transaction.recorded',
-      {
-        transactionId: body.transaction.id,
-        type: body.transaction.type,
-        amount: body.transaction.amount,
-        balanceAfter: body.transaction.balanceAfter,
-      },
-      performance.now() - start,
-    );
+    traceWriteResult(trace, { transaction: body.transaction, replayed }, performance.now() - start);
     res.json(body satisfies CreateTransactionResult);
   });
 

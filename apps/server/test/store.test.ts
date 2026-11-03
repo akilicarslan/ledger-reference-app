@@ -2,6 +2,7 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } fro
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { TraceEventName } from '@ledger/contracts';
 import { DEFAULT_DATA_DIR } from '../src/config';
 import { Ledger } from '../src/domain/ledger';
 import { JsonFileLedgerRepository, LedgerFileError } from '../src/store/ledgerRepository';
@@ -71,7 +72,7 @@ describe('seed data', () => {
 });
 
 describe('TraceStore', () => {
-  const event = (name: string, traceId = TRACE_A) => ({
+  const event = (name: TraceEventName, traceId = TRACE_A) => ({
     traceId,
     spanId: '00f067aa0ba902b7',
     name,
@@ -82,23 +83,33 @@ describe('TraceStore', () => {
   it('appends JSON lines and loads them after a restart', () => {
     const file = join(directory, 'traces.jsonl');
     const store = new TraceStore({ filePath: file });
-    store.record(event('a'));
-    store.record(event('b'));
-    store.record(event('other', 'ffffffffffffffffffffffffffffffff'));
+    store.record(event('http.request.received'));
+    store.record(event('http.response.sent'));
+    store.record(event('http.request.received', 'ffffffffffffffffffffffffffffffff'));
     expect(readFileSync(file, 'utf8').trim().split('\n')).toHaveLength(3);
     const restarted = new TraceStore({ filePath: file });
-    expect(restarted.get(TRACE_A).map((item) => item.name)).toEqual(['a', 'b']);
+    expect(restarted.get(TRACE_A).map((item) => item.name)).toEqual([
+      'http.request.received',
+      'http.response.sent',
+    ]);
   });
 
   it('ignores a damaged line and keeps only the newest events in memory', () => {
     const file = join(directory, 'traces.jsonl');
-    writeFileSync(file, `${JSON.stringify(event('ok'))}\n{ broken\n`);
+    const unknownName = { ...event('http.error'), name: 'not.a.trace.event' };
+    writeFileSync(
+      file,
+      `${JSON.stringify(event('http.error'))}\n{ broken\n${JSON.stringify(unknownName)}\n`,
+    );
     expect(new TraceStore({ filePath: file }).get(TRACE_A)).toHaveLength(1);
 
     const small = new TraceStore({ maxEvents: 2 });
-    small.record(event('1'));
-    small.record(event('2'));
-    small.record(event('3'));
-    expect(small.get(TRACE_A).map((item) => item.name)).toEqual(['2', '3']);
+    small.record(event('http.request.received'));
+    small.record(event('validation.passed'));
+    small.record(event('http.response.sent'));
+    expect(small.get(TRACE_A).map((item) => item.name)).toEqual([
+      'validation.passed',
+      'http.response.sent',
+    ]);
   });
 });

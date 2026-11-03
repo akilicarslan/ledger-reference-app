@@ -7,9 +7,9 @@ import { ApiError } from '../src/api/errors';
 import { FALLBACK_AS_OF } from '../src/stocks/fallback';
 import { useStockQuotes, useStockSearch } from '../src/stocks/queries';
 import { MAX_RETRIES, retryDelay, shouldRetry } from '../src/stocks/retryPolicy';
-import { createFakeApi } from './fakes';
+import { createSpiedApi } from './fakes';
 
-function wrapperFor(api: ReturnType<typeof createFakeApi>) {
+function wrapperFor(api: ReturnType<typeof createSpiedApi>) {
   // No retries in these tests: the retry policy has its own unit tests below.
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return ({ children }: { children: ReactNode }) => (
@@ -43,7 +43,7 @@ describe('retry policy', () => {
 
 describe('useStockQuotes', () => {
   it('shows live data after a successful request', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     api.getStockQuotes.mockResolvedValue([
       {
         symbol: 'AAPL',
@@ -62,7 +62,7 @@ describe('useStockQuotes', () => {
   });
 
   it('shows the bundled snapshot when the request fails and no data exists', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     api.getStockQuotes.mockRejectedValue(upstreamDown);
     const { result } = renderHook(() => useStockQuotes(['AAPL', 'MSFT']), {
       wrapper: wrapperFor(api),
@@ -74,7 +74,7 @@ describe('useStockQuotes', () => {
   });
 
   it('keeps the last good data and marks it stale when a refetch fails', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     api.getStockQuotes.mockResolvedValueOnce([
       {
         symbol: 'AAPL',
@@ -97,7 +97,7 @@ describe('useStockQuotes', () => {
 
 describe('useStockSearch', () => {
   it('sends one request after the user stops typing (debounce)', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     api.searchStocks.mockResolvedValue([{ symbol: 'AAPL', name: 'Apple Inc.' }]);
     const { result, rerender } = renderHook(({ text }) => useStockSearch(text), {
       wrapper: wrapperFor(api),
@@ -113,7 +113,7 @@ describe('useStockSearch', () => {
   });
 
   it('searches the bundled list when the service fails', async () => {
-    const api = createFakeApi();
+    const api = createSpiedApi();
     api.searchStocks.mockRejectedValue(upstreamDown);
     const { result } = renderHook(() => useStockSearch('pfiz'), { wrapper: wrapperFor(api) });
     await waitFor(() => expect(result.current.source).toBe('fallback'));

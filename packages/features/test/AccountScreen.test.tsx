@@ -1,67 +1,8 @@
 import { QueryClient } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { Balance, NewTransactionInput, TraceEvent, Transaction } from '@ledger/contracts';
-import { ApiError, type ApiClient } from '@ledger/core';
+import { createFakeApi } from '@ledger/core/testing';
 import { AppProviders, AppShell, TestIds, type PlatformServices } from '../src';
-
-const NOW = '2026-10-13T09:00:00.000Z';
-
-/**
- * In-memory API with the server rules: the balance cannot go below 0, and
- * each write records trace events under the trace ID of the request.
- */
-function createMemoryApi(): ApiClient {
-  let balanceCents = 0;
-  const items: Transaction[] = [];
-  const events: TraceEvent[] = [];
-  const traceEvent = (traceId: string, name: string, elapsedMs: number): TraceEvent => ({
-    traceId,
-    spanId: '00f067aa0ba902b7',
-    name,
-    at: NOW,
-    attributes: { elapsedMs },
-  });
-  const balance = (): Balance => ({ amount: balanceCents / 100, currency: 'USD', updatedAt: NOW });
-  return {
-    getBalance: async () => balance(),
-    getRecentTransactions: async (limit = 5) => items.slice(0, limit),
-    createTransaction: async (input: NewTransactionInput, options) => {
-      const traceId = options?.traceId ?? 'f'.repeat(32);
-      events.push(traceEvent(traceId, 'http.request.received', 0));
-      const delta = Math.round(input.amount * 100) * (input.type === 'credit' ? 1 : -1);
-      if (balanceCents + delta < 0) {
-        events.push(traceEvent(traceId, 'ledger.transaction.refused', 0.4));
-        throw new ApiError(
-          'INSUFFICIENT_FUNDS',
-          `The transaction is refused. The balance cannot go below $0.00. Available balance: $${(balanceCents / 100).toFixed(2)}.`,
-          traceId,
-        );
-      }
-      events.push(traceEvent(traceId, 'ledger.transaction.recorded', 0.8));
-      balanceCents += delta;
-      const transaction: Transaction = {
-        id: `00000000-0000-4000-8000-${String(items.length + 1).padStart(12, '0')}`,
-        type: input.type,
-        amount: input.amount,
-        title: input.title,
-        description: input.description ?? '',
-        dateTime: input.dateTime ?? NOW,
-        receiptImage: input.receiptImage ?? null,
-        balanceAfter: balanceCents / 100,
-        traceId,
-      };
-      items.unshift(transaction);
-      return { transaction, balance: balance() };
-    },
-    getStockQuotes: async () => [],
-    searchStocks: async () => [],
-    getTrace: async (traceId) => ({
-      traceId,
-      events: events.filter((event) => event.traceId === traceId),
-    }),
-  };
-}
 
 const services: PlatformServices = { pickImage: vi.fn(async () => null) };
 
@@ -69,7 +10,7 @@ function renderApp() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <AppProviders
-      api={createMemoryApi()}
+      api={createFakeApi()}
       services={services}
       queryClient={queryClient}
       scheme="light"

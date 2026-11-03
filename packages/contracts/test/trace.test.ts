@@ -7,6 +7,8 @@ import {
   newTraceId,
   parseTraceparent,
   randomHex,
+  TraceEvent,
+  TraceEventName,
 } from '../src';
 
 describe('trace helpers (W3C Trace Context)', () => {
@@ -54,6 +56,28 @@ describe('trace helpers (W3C Trace Context)', () => {
       Math.random = random;
       Object.defineProperty(globalThis, 'crypto', { value: original, configurable: true });
     }
+  });
+});
+
+describe('trace event names', () => {
+  const event = {
+    traceId: '4bf92f3577b34da6a3ce929d0e0e4736',
+    spanId: '00f067aa0ba902b7',
+    at: '2026-10-13T09:00:00.000Z',
+    attributes: {},
+  };
+
+  it('accepts each name of the closed set, also the chaos events', () => {
+    for (const name of TraceEventName.options) {
+      expect(TraceEvent.parse({ ...event, name }).name).toBe(name);
+    }
+    expect(TraceEventName.options).toEqual(
+      expect.arrayContaining(['chaos.delay', 'chaos.failure']),
+    );
+  });
+
+  it('refuses a name that is not in the set', () => {
+    expect(TraceEvent.safeParse({ ...event, name: 'ledger.transaction.lost' }).success).toBe(false);
   });
 });
 

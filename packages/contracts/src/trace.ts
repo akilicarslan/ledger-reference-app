@@ -77,6 +77,32 @@ export function parseTraceparent(value: string | null | undefined): TraceContext
   return { traceId, spanId };
 }
 
+/**
+ * All events that the server records. The set is closed: the server can emit
+ * only these names, and a client can give each name a label. Add a name here
+ * first, then emit it on the server and label it in the Request trace card.
+ * See docs/TRACING.md, section "Server events".
+ */
+export const TraceEventName = z
+  .enum([
+    'http.request.received',
+    'validation.passed',
+    'validation.failed',
+    'ledger.transaction.recorded',
+    'ledger.transaction.refused',
+    'ledger.transaction.replayed',
+    'ledger.idempotency.conflict',
+    'chaos.delay',
+    'chaos.failure',
+    'http.error',
+    'http.response.sent',
+  ])
+  .meta({
+    id: 'TraceEventName',
+    description: 'Name of one server step. The set is closed.',
+    example: 'ledger.transaction.refused',
+  });
+
 export const TraceEvent = z
   .object({
     traceId: TraceId,
@@ -84,7 +110,7 @@ export const TraceEvent = z
     parentSpanId: SpanId.optional().meta({
       description: 'The span of the caller (the client request).',
     }),
-    name: z.string().meta({ example: 'ledger.transaction.refused' }),
+    name: TraceEventName,
     at: z.iso.datetime({ offset: true }),
     durationMs: z.number().nonnegative().optional(),
     attributes: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
@@ -100,5 +126,6 @@ export const Trace = z
   })
   .meta({ id: 'Trace', description: 'All server events of one user action.' });
 
+export type TraceEventName = z.infer<typeof TraceEventName>;
 export type TraceEvent = z.infer<typeof TraceEvent>;
 export type Trace = z.infer<typeof Trace>;
