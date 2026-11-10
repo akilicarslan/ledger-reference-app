@@ -24,11 +24,11 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "nitrogen": "^0.37.1",
+    "nitrogen": "^0.37.2",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-nitro-modules": "^0.37.1",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.4"
+    "vitest": "^5.1.0"
   }
 }
