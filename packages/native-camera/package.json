@@ -25,9 +25,9 @@
   "devDependencies": {
     "@types/react": "~19.2.2",
     "nitrogen": "^0.37.1",
-    "react": "19.2.3",
+    "react": "19.2.9",
     "react-native": "0.86.3",
-    "react-native-nitro-modules": "^0.37.1",
+    "react-native-nitro-modules": "^0.37.2",
     "typescript": "~6.0.3",
     "vitest": "^5.0.4"
   }
